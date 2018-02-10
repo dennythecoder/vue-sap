@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <title>Example in Browser Environment</title>
+  </head>
+  <body>
+    <div id="app">
+
+      <test-component></test-component>
+    </div>
+
+
+
+    <script src="https://unpkg.com/vue"></script>
+    <script src="../dist/vue-sap.js"></script>
+    <script>
+      Vue.component('test-component',{
+        subscribed:{
+          'msg':'msg'
+        },
+        template:`<h4>{{msg}}</h4>`
+
+      })
+
+      new Vue({
+        el:'#app',
+        published:{
+          'msg':'Sweet Msg'
+        }
+      })
+    
+    </script>
+  </body>
+</html>
