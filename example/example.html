@@ -6,6 +6,9 @@
     <div id="app">
 
       <test-component></test-component>
+      <static-component></static-component>
+      <static-component></static-component>
+      <static-component></static-component>
     </div>
 
 
@@ -20,6 +23,24 @@
         template:`<h4>{{msg}}</h4>`
 
       })
+
+
+      Vue.component('static-component',{
+        statics:{
+          styleObj:{backgroundColor:'#aaa'}
+        },
+        methods:{
+          onClick(){
+            const so = this.styleObj;
+            if(so.backgroundColor === 'red'){
+              so.backgroundColor = 'blue';
+            }else{
+              so.backgroundColor = 'red';
+            }
+          }
+        },
+        template: `<div :style="styleObj" @click="onClick" style="width:40px; height:40px; border-radius: 20px 20px;"></div>`
+      });
 
       new Vue({
         el:'#app',

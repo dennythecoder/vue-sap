@@ -31,6 +31,29 @@ export default {
 
 ````
 
+### Statics
+
+Vue-Sap includes statics for components.  This can let you share and modify the same value... statics are usually frowned upon though... perhaps you shouldn't use them.
+
+````javascript
+export default{
+    statics:{
+        styleObj:{backgroundColor:'#aaa'}
+    },
+    methods:{
+        onClick(){
+        const so = this.styleObj;
+        if(so.backgroundColor === 'red'){
+            so.backgroundColor = 'blue';
+        }else{
+            so.backgroundColor = 'red';
+        }
+        }
+    },
+    template: `<div :style="styleObj" @click="onClick" style="width:40px; height:40px; border-radius: 20px 20px;"></div>`
+}
+
+````
 
 #### The Output
 
