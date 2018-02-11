@@ -1,50 +1,95 @@
+function createStore(Vue) {
+  var store = new Vue({ data: { subscriptions: {}, statics: {} } });
+  Vue.prototype.$subscriptions = store.subscriptions;
+  Vue.prototype.$statics = store.statics;
+}
+
+function hasProp(obj, prop) {
+  if (obj.hasOwnProperty) {
+    return obj.hasOwnProperty(prop);
+  } else {
+    return !!obj[prop];
+  }
+}
+
+function definePublishedProperty(vm, key, obj) {
+  var ss = vm.$subscriptions;
+  vm.$set(ss, key, obj[key]);
+  Object.defineProperty(vm, key, {
+    get: function get() {
+      return ss[key];
+    },
+    set: function set(newValue) {
+      vm.$set(ss, key, newValue);
+    }
+  });
+}
+
+function defineSubscribedProperty(vm, key, obj) {
+  var ss = vm.$subscriptions;
+  Object.defineProperty(vm, key, {
+    get: function get() {
+      return ss[key];
+    },
+    set: function set(newValue) {
+      vm.$set(ss, key, newValue);
+    }
+  });
+}
+
+function defineStaticProperty(vm, key, obj) {
+  var ss = vm.$statics;
+  var cid = vm.constructor.cid;
+  if (!ss[cid]) {
+    vm.$set(ss, cid, {});
+  }
+  if (!hasProp(ss[cid], key)) {
+    vm.$set(ss[cid], key, obj[key]);
+  }
+  Object.defineProperty(vm, key, {
+    get: function get() {
+      return ss[cid][key];
+    },
+    set: function set(newValue) {
+      vm.$set(ss[cid], key, newValue);
+    }
+  });
+}
+
+var mixin = {
+  created: function created() {
+    var _$options = this.$options,
+        published = _$options.published,
+        subscribed = _$options.subscribed,
+        statics = _$options.statics;
+
+    if (published) {
+      for (var key in published) {
+        definePublishedProperty(this, key, published);
+      }
+    }
+
+    if (subscribed) {
+      for (var _key in subscribed) {
+        defineSubscribedProperty(this, _key, subscribed);
+      }
+      this.$forceUpdate();
+    }
+
+    if (statics) {
+      for (var _key2 in statics) {
+        defineStaticProperty(this, _key2, statics);
+      }
+      this.$forceUpdate();
+    }
+  }
+};
+
+var subscriptions = createStore(Vue);
+
 var plugin = {
 	install: function install(Vue) {
-		var ss = Vue.prototype.$Subscriptions = new Vue({ data: { subscriptions: {} } }).subscriptions;
-
-		Vue.mixin({
-			created: function created() {
-				var _this = this;
-
-				var p = this.$options.published;
-				if (p) {
-					var _loop = function _loop(key) {
-						Vue.set(ss, key, p[key]);
-						Object.defineProperty(_this, key, {
-							get: function get() {
-								return ss[key];
-							},
-							set: function set(newValue) {
-								Vue.set(ss, key, newValue);
-							}
-						});
-					};
-
-					for (var key in p) {
-						_loop(key);
-					}
-				}
-				var s = this.$options.subscribed;
-				if (s) {
-					var _loop2 = function _loop2(key) {
-
-						Object.defineProperty(_this, key, {
-							get: function get() {
-								return ss[key] || '';
-							},
-							set: function set(newValue) {
-								Vue.set(ss, key, newValue);
-							}
-						});
-					};
-
-					for (var key in s) {
-						_loop2(key);
-					}
-					this.$forceUpdate();
-				}
-			}
-		});
+		Vue.mixin(mixin);
 	}
 };
 
