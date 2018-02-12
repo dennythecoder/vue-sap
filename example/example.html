@@ -7,13 +7,13 @@
 
       <test-component></test-component>
       <static-component></static-component>
-      <static-component></static-component>
-      <static-component></static-component>
+      <static-component is-fahrenheit></static-component>
+
     </div>
 
 
 
-    <script src="https://unpkg.com/vue"></script>
+    <script src="./vue.js"></script>
     <script src="../dist/vue-sap.js"></script>
     <script>
       Vue.component('test-component',{
@@ -26,20 +26,35 @@
 
 
       Vue.component('static-component',{
-        statics:{
-          styleObj:{backgroundColor:'#aaa'}
+        props:{
+          isFahrenheit:{
+            type: Boolean,
+            required: false,
+            default: false
+          }
         },
-        methods:{
-          onClick(){
-            const so = this.styleObj;
-            if(so.backgroundColor === 'red'){
-              so.backgroundColor = 'blue';
-            }else{
-              so.backgroundColor = 'red';
+        statics:{
+          temp:0
+        },
+        computed:{
+          displayTemp:{
+            get(){
+              if(this.isFahrenheit){
+                return this.temp * 9 / 5 + 32;
+              }else{
+                return this.temp;
+              }
+            },
+            set(newValue){
+              if(this.isFahrenheit){
+                this.temp = (newValue - 32) * 5 / 9;
+              }else{
+                this.temp = newValue;
+              }
             }
           }
         },
-        template: `<div :style="styleObj" @click="onClick" style="width:40px; height:40px; border-radius: 20px 20px;"></div>`
+        template: `<label>{{isFahrenheit ? 'Fahrenheit' : 'Celsius'}}<input type="text" v-model="displayTemp" /></label>`
       });
 
       new Vue({
