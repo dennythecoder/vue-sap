@@ -26,17 +26,13 @@ function defineSubscribedProperty(vm, key, obj){
 }
 
 function defineStaticProperty(vm, key, obj){
-  const ss = vm.$statics;
-  const cid = vm.constructor.cid;
-  if(!ss[cid]){
-    vm.$set(ss, cid, {});
-  }
-  if(!hasProp(ss[cid], key)){
-    vm.$set(ss[cid], key, obj[key]);
+  const cc = vm.constructor;
+  if(!hasProp(cc, key)){
+    vm.$set(cc, key, obj[key]);
   }
   Object.defineProperty(vm, key,{
-    get:()=>ss[cid][key],
-    set:(newValue)=> {vm.$set(ss[cid], key, newValue);}
+    get:()=> cc[key],
+    set:(newValue)=> {vm.$set(cc, key, newValue);}
   });
 }
 
