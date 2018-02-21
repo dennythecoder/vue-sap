@@ -12,46 +12,61 @@ function hasProp(obj, prop) {
   }
 }
 
+function defineProperty(vm, key) {
+  var ss = vm.$subscriptions;
+  Object.defineProperty(vm, key, {
+    get: function get() {
+      return ss[key].value;
+    },
+    set: function set(newValue) {
+      vm.$set(ss[key], 'value', newValue);
+    }
+  });
+}
+
+function defineReadOnlyProperty(vm, key) {
+  var ss = vm.$subscriptions;
+  Object.defineProperty(vm, key, {
+    get: function get() {
+      return ss[key].value;
+    },
+    set: function set(newValue) {/* */}
+  });
+}
+
 function definePublishedProperty(vm, key, obj) {
   var ss = vm.$subscriptions;
   vm.$set(ss, key, obj[key]);
-  Object.defineProperty(vm, key, {
-    get: function get() {
-      return ss[key];
-    },
-    set: function set(newValue) {
-      vm.$set(ss, key, newValue);
-    }
-  });
+  defineProperty(vm, key);
 }
 
 function defineSubscribedProperty(vm, key, obj) {
   var ss = vm.$subscriptions;
-  Object.defineProperty(vm, key, {
-    get: function get() {
-      return ss[key];
-    },
-    set: function set(newValue) {
-      vm.$set(ss, key, newValue);
+  if (ss[key]) {
+    if (!ss[key].readOnly) {
+      defineProperty(vm, key);
+    } else {
+      defineReadOnlyProperty(vm, key);
     }
-  });
+  } else {
+    var unwatch = ss.$watch(key, function () {
+      defineSubscribedProperty(vm, key, obj);
+      unwatch();
+    });
+  }
 }
 
 function defineStaticProperty(vm, key, obj) {
-  var ss = vm.$statics;
-  var cid = vm.constructor.cid;
-  if (!ss[cid]) {
-    vm.$set(ss, cid, {});
-  }
-  if (!hasProp(ss[cid], key)) {
-    vm.$set(ss[cid], key, obj[key]);
+  var cc = vm.constructor;
+  if (!hasProp(cc, key)) {
+    vm.$set(cc, key, obj[key]);
   }
   Object.defineProperty(vm, key, {
     get: function get() {
-      return ss[cid][key];
+      return cc[key];
     },
     set: function set(newValue) {
-      vm.$set(ss[cid], key, newValue);
+      vm.$set(cc, key, newValue);
     }
   });
 }
@@ -73,13 +88,14 @@ var mixin = {
       for (var _key in subscribed) {
         defineSubscribedProperty(this, _key, subscribed);
       }
-      this.$forceUpdate();
     }
 
     if (statics) {
       for (var _key2 in statics) {
         defineStaticProperty(this, _key2, statics);
       }
+    }
+    if (subscribed || statics) {
       this.$forceUpdate();
     }
   }
