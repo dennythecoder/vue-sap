@@ -1,23 +1,23 @@
-
 function hasProp(obj, prop){
   if(obj.hasOwnProperty){
     return obj.hasOwnProperty(prop);
-  }else{
+  } else {
     return !!obj[prop];
   }
 }
 
-
 function defineProperty(vm, key){
+  const ss = vm.$subscriptions;
   Object.defineProperty(vm, key,{
-    get: ()=> ss[key],
-    set: (newValue)=> {vm.$set(ss, key, newValue);}
+    get: ()=> ss[key].value,
+    set: (newValue)=> {vm.$set(ss[key], 'value', newValue);}
   });
 }
 
 function defineReadOnlyProperty(vm, key){
+  const ss = vm.$subscriptions;
   Object.defineProperty(vm, key,{
-    get: ()=> ss[key],
+    get: ()=> ss[key].value,
     set: (newValue)=> { /* */ }
   });
 }
@@ -32,7 +32,19 @@ function definePublishedProperty(vm, key, obj){
 
 function defineSubscribedProperty(vm, key, obj){
   const ss = vm.$subscriptions;
-  defineProperty(vm, key);
+  if(ss[key]){
+    if(!ss[key].readOnly){
+      defineProperty(vm, key);
+    }else{
+      defineReadOnlyProperty(vm, key);
+    }
+  }else{
+    const unwatch = ss.$watch(key, ()=> {
+      defineSubscribedProperty(vm, key, obj);
+      unwatch();
+    });
+  }
+  
 }
 
 function defineStaticProperty(vm, key, obj){
@@ -69,7 +81,5 @@ export default {
     if(subscribed || statics){
       this.$forceUpdate();
     }
-    
-    
   }
 };
